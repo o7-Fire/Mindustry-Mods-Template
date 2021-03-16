@@ -1,4 +1,7 @@
+import arc.util.OS
+
 import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 
 buildscript {
@@ -14,6 +17,10 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+    }
+
+    dependencies{
+        classpath ("com.github.Anuken.Arc:arc-core:$arcHash")
     }
 
 }
@@ -117,13 +124,11 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
 }
-jar {
+task baseJar(type: Jar){
     archiveFileName = modsNname + ".jar"
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 
     from(rootDir){
         include "mod.hjson"
@@ -156,7 +161,7 @@ tasks.withType(JavaCompile) {
 }
 
 task makeJar(type: Jar){
-    dependsOn jar
+    dependsOn baseJar
     if(new File(sdkD8).exists()) {
         archiveFileName = modsNname + "-Dexed.jar"
 
@@ -166,11 +171,11 @@ task makeJar(type: Jar){
                 zipTree(new File(rootDir, "build/libs/Dex.jar"))
             }
         }
-        from() {
-            zipTree(new File(rootDir, "build/libs/${modsNname}.jar"))
-        }
     }else {
         println "No sdkD8 detected on ANDROID_HOME, skipping making Dex Jar"
+    }
+    from() {
+        zipTree(new File(rootDir, "build/libs/${modsNname}.jar"))
     }
 }
 task deploy(type: Jar) {
@@ -179,4 +184,46 @@ task deploy(type: Jar) {
 artifacts {
     archives sourcesJar
     archives makeJar
+}
+
+
+static void downloadMindustry(URL u, File mindustry){
+    mindustry.getParentFile().mkdirs();
+    if(mindustry.exists())return ;
+    mindustry.createNewFile();
+    System.out.println("Downloading: " + u.toString());
+    FileOutputStream f = new FileOutputStream(mindustry);
+    arc.util.io.Streams.copy(u.openStream(), f);
+    f.close()
+
+}
+static void copyToMindustry(File f){
+    File target = new File(OS.getAppDataDirectoryString("Mindustry"))
+    target = new File(target, "mods")
+    target = new File(target, f.getName())
+    target.getParentFile().mkdirs()
+    System.out.println("Copying: " + f.getAbsolutePath() + " to "+ target.getAbsolutePath());
+    Files.copy(f.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+}
+task download(){
+    doLast{
+        URL u = new URL("https://github.com/Anuken/Mindustry/releases/download/" + mindustryHash + "/Mindustry.jar");
+        File mindustry = new File(new File(rootDir, "build/cache/"), u.getFile());
+        downloadMindustry(u, mindustry);
+    }
+}
+task copyMods(){
+    dependsOn baseJar
+    doLast{
+        copyToMindustry(new File(new File(rootDir.toString()), "build/libs/"+modsNname+".jar"))
+    }
+}
+task run(type: JavaExec) {
+    dependsOn download
+    dependsOn copyMods
+    URL u = new URL("https://github.com/Anuken/Mindustry/releases/download/" + mindustryHash + "/Mindustry.jar");
+    File mindustry = new File(new File(rootDir, "build/cache/"), u.getFile());
+    classpath = files(mindustry.getAbsolutePath())
+    classpath += sourceSets.main.runtimeClasspath
+    main = "mindustry.desktop.DesktopLauncher"
 }
