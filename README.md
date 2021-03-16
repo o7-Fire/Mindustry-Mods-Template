@@ -5,6 +5,9 @@ Note: automatically use d8 and make dexed jar if detected
 ### How to get indexed by mods browser
 ![](https://cdn.discordapp.com/attachments/713346278003572777/821210982449807380/unknown.png)
 
+### How to build and run
+- gradle run
+
 ### How to make jar for android
 - install Android SDK ???
 - add to ANDROID_HOME environment
