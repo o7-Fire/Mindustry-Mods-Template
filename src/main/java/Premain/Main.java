@@ -6,6 +6,7 @@ import arc.scene.Action;
 import arc.scene.Scene;
 import arc.scene.ui.Dialog;
 import arc.util.Log;
+import arc.util.OS;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.gen.Icon;
@@ -24,7 +25,7 @@ public class Main extends Mod {
 						Vars.ui.showInfoFade("Yeet");
 					}).growX();
 					cont.row();
-					cont.button("Close", Icon.image, this::hide).growX();
+					cont.button( Icon.cancel, this::hide).growX();
 				}}.show();
 			});
 		});
