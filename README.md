@@ -14,3 +14,7 @@ Note: automatically use d8 and make dexed jar if detected
 - Example-Mods-Dexed = class and dex
 
 ![](https://cdn.discordapp.com/attachments/713346278003572777/821212560820404274/unknown.png)
+
+### Edit the gradle.properties instead of mod.hjson
+
+### Editing Changelog.md
