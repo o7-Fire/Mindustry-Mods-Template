@@ -17,4 +17,7 @@ Note: automatically use d8 and make dexed jar if detected
 
 ### Edit the gradle.properties instead of mod.hjson
 
-### Editing Changelog.md
+### Editing Changelog.md will affect the release description
+![](https://cdn.discordapp.com/attachments/796869250533818418/821228000523059220/unknown.png)
+
+### Automatically create a new draft everytime you push 
