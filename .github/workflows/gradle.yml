@@ -3,9 +3,8 @@ name: Java CI
 on: [push]
 
 jobs:
-  Build-Test-Release:
+ Build-Test-Release:
     runs-on: ubuntu-latest
-
     steps:
      # Check out current repository
     - name: Fetch Sources
@@ -98,15 +97,16 @@ jobs:
         asset_name: Example-Mods.jar
         asset_content_type: application/zip
     - name: Git Commit
-      if: always()
       run: |
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "Github-CI[Bot]"
         git add .
         git commit -m "Build"
+        echo retard
     - name: Push changes
-      if: always()
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: ${{ github.ref }}   
+
+  
