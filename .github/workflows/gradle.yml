@@ -43,7 +43,7 @@ jobs:
     - name: Upload built android jar file
       uses: actions/upload-artifact@v2
       with:
-        name: Mods-Core-Dexed
+        name: Example-Mods-Dexed
         path: build/libs/Example-Mods-Dexed.jar
    
     - name: Read changelog
