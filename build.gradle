@@ -90,11 +90,7 @@ allprojects {
             modhjson += "repo: \"" + githubRepo +"\" \n"
         else
             modhjson += 'repo: "' + modsNrepo + '"\n'
-        try{
-            File f = new File(projectDir, "mod.hjson")
-            f.delete()
-            Files.write(f.toPath(), modhjson.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-        }catch(Throwable){}
+
 
 
         //From Root to every project
@@ -114,7 +110,15 @@ allprojects {
 
 
 }
+ext{
+    try {
+        File f = new File(projectDir, "mod.hjson")
+        f.delete()
+        Files.write(f.toPath(), modhjson.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+    } catch (Throwable) {
+    }
 
+}
 //Root Module only
 dependencies {
 
