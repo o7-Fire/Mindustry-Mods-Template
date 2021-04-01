@@ -91,7 +91,7 @@ allprojects {
         else
             modhjson += 'repo: "' + modsNrepo + '"\n'
         try{
-            File f = new File(rootDir, "mod.hjson")
+            File f = new File(projectDir, "mod.hjson")
             f.delete()
             Files.write(f.toPath(), modhjson.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
         }catch(Throwable){}
@@ -132,7 +132,7 @@ task baseJar(type: Jar){
     }
     with jar
 
-    from(rootDir){
+    from(projectDir){
         include "mod.hjson"
         include "icon.png"
     }
@@ -142,7 +142,7 @@ task baseJar(type: Jar){
         def files = (configurations.compileClasspath.asList() + configurations.runtimeClasspath.asList() + [new File(sdkJar)])
         def dependencies = files.collect { "--classpath $it.path" }.join(" ")
         def cmd = "${sdkD8} $dependencies --min-api ${minAndroidApi} --output Dex.jar ${modsNname}.jar"
-        def dir = new File(rootDir, "build/libs/");
+        def dir = new File(projectDir, "build/libs/");
         dir.mkdirs()
         doLast {
             if (new File(sdkD8).exists() && new File(sdkJar).exists()) {
@@ -170,14 +170,14 @@ task makeJar(type: Jar){
         duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
         if (new File(sdkD8).exists()) {
             from() {
-                zipTree(new File(rootDir, "build/libs/Dex.jar"))
+                zipTree(new File(projectDir, "build/libs/Dex.jar"))
             }
         }
     }else {
         println "No sdkD8 detected on ANDROID_HOME, skipping making Dex Jar"
     }
     from() {
-        zipTree(new File(rootDir, "build/libs/${modsNname}.jar"))
+        zipTree(new File(projectDir, "build/libs/${modsNname}.jar"))
     }
 }
 task deploy(type: Jar) {
@@ -217,7 +217,7 @@ task download(){
 task copyMods(){
     dependsOn baseJar
     doLast{
-        copyToMindustry(new File(new File(rootDir.toString()), "build/libs/"+modsNname+".jar"))
+        copyToMindustry(new File(new File(projectDir.toString()), "build/libs/"+modsNname+".jar"))
     }
 }
 task run(type: JavaExec) {
