@@ -214,7 +214,7 @@ static void copyToMindustry(File f){
 task download(){
     doLast{
         URL u = new URL("https://github.com/Anuken/Mindustry/releases/download/" + mindustryHash + "/Mindustry.jar");
-        File mindustry = new File(new File(rootDir, "build/cache/"), u.getFile());
+        File mindustry = new File(new File(new File(OS.getAppDataDirectoryString("Mindustry")), "build/cache/"), u.getFile());
         downloadMindustry(u, mindustry);
     }
 }
@@ -228,7 +228,7 @@ task run(type: JavaExec) {
     dependsOn download
     dependsOn copyMods
     URL u = new URL("https://github.com/Anuken/Mindustry/releases/download/" + mindustryHash + "/Mindustry.jar");
-    File mindustry = new File(new File(rootDir, "build/cache/"), u.getFile());
+    File mindustry = new File(new File(new File(OS.getAppDataDirectoryString("Mindustry")), "build/cache/"), u.getFile());
     classpath = files(mindustry.getAbsolutePath())
     classpath += sourceSets.main.runtimeClasspath
     main = "mindustry.desktop.DesktopLauncher"
