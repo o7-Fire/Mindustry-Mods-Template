@@ -189,7 +189,7 @@ task deploy(type: Jar) {
 }
 artifacts {
     archives sourcesJar
-    archives makeJar
+    archives baseJar
 }
 
 
