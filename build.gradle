@@ -123,24 +123,29 @@ ext{
 dependencies {
 
 }
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-task baseJar(type: Jar){
+task base(type: Jar){
     archiveFileName = modsNname + ".jar"
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     with jar
+    manifest {
+        attributes 'Main-Class': 'org.o7.Fire.Bootstrapper.Java'
+    }
 
-    from(projectDir){
+
+    from(rootDir){
         include "mod.hjson"
         include "icon.png"
     }
-
+}
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+task baseJar{
+    dependsOn base
     //collect dependencies needed for desugaring
     if(new File(sdkD8).exists()) {
         def files = (configurations.compileClasspath.asList() + configurations.runtimeClasspath.asList() + [new File(sdkJar)])
@@ -189,7 +194,7 @@ task deploy(type: Jar) {
 }
 artifacts {
     archives sourcesJar
-    archives baseJar
+    archives base
 }
 
 
@@ -219,7 +224,7 @@ task download(){
     }
 }
 task copyMods(){
-    dependsOn baseJar
+    dependsOn base
     doLast{
         copyToMindustry(new File(new File(projectDir.toString()), "build/libs/"+modsNname+".jar"))
     }
