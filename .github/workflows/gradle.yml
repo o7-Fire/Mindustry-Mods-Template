@@ -13,7 +13,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 14
-
+    #when you don't
     - name: Change wrapper permissions
       run: chmod +x ./gradlew
 
@@ -30,18 +30,23 @@ jobs:
       with:
         path: ~/.gradle/wrapper
         key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
-      
+    #Build all mods
     - name: Build mod jar
       run: ./gradlew deploy -PgithubRepo="$GITHUB_REPOSITORY"
 
+    #upload to action artifact
     - name: Upload built jar file
       uses: actions/upload-artifact@v2
       with:
+        #replace with your mods name
+        #TODO how to get current repo name
         name: Example-Mods
         path: build/libs/Example-Mods.jar
+
     - name: Upload built android jar file
       uses: actions/upload-artifact@v2
       with:
+        #replace with your mods name
         name: Example-Mods-Dexed
         path: build/libs/Example-Mods-Dexed.jar
 
@@ -55,7 +60,7 @@ jobs:
           | xargs -I '{}' \
         curl -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/$GITHUB_REPOSITORY/releases/{}
 
-
+    #cat eqv
     - name: Read changelog
       id: manifest
       uses: juliangruber/read-file-action@v1
@@ -69,12 +74,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
+        #write it by yourself, not worth automating it
         tag_name: "Snapshot"
         release_name: "0.0.0"
         body: "${{ steps.manifest.outputs.content }}"
         draft: true
 
-
+    #upload to release
     - name: Upload Dex Core
       id: upload-release-core-dex
       uses: actions/upload-release-asset@v1
@@ -85,7 +91,9 @@ jobs:
         asset_path: ./build/libs/Example-Mods-Dexed.jar
         asset_name: dexed-Example-Mods.jar
         asset_content_type: application/zip
-        
+
+    #upload to release
+    #wait Dex Core work on pc too
     - name: Upload Core
       id: upload-release-core
       uses: actions/upload-release-asset@v1
