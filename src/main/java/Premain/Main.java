@@ -25,7 +25,7 @@ public class Main extends Mod {
 				}}.show();
 			});
 		});//sike how to color bracket
-		Vars.ui.settings.game.table(t ->{
+		Vars.ui.settings.game.row().table(t ->{
 			t.check("Boolean [red][Test]", s->{
 				stat = s;//assign to global ?
 				Vars.ui.showInfo(stat+"");//toString()
