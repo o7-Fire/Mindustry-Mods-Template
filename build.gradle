@@ -5,7 +5,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 
 buildscript {
-    repositories {
+    repositories {//more than you need
         mavenLocal()
         mavenCentral()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
@@ -29,6 +29,7 @@ apply plugin: 'java-library'
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
+//github CI don't sort folder by default
 static File getLatestFolder(File fe){
     ArrayList<File> f = new ArrayList<>();
     if(!fe.exists())throw new FileNotFoundException(fe.getAbsolutePath());
@@ -57,23 +58,25 @@ allprojects {
     ext {
 
         //automatically detect latest shit and skipping it if doesn't exists
-        sdkRoot = System.getenv("ANDROID_HOME")
+        sdkRoot = System.getenv("ANDROID_HOME")//or just replace it by direct path if you don't need github CI
         if(sdkRoot == null)
             sdkRoot = new File("SDK").getAbsolutePath()
         sdkD8 = sdkRoot + "nope"
-        sdkJar = sdkRoot + "nope"
+        sdkJar = sdkRoot + "nope"//nopped in case folder didn't exist
         if(new File(sdkRoot).exists()) {
             try {
                 sdkD8 = new File(getLatestFolder(new File(sdkRoot, 'build-tools/')), "d8").getAbsolutePath()
                 sdkJar = new File(getLatestFolder(new File(sdkRoot, "platforms/")), "android.jar").getAbsolutePath()
-            }catch(ignored){}
+            }catch(ignored){
+                //FileNotFoundException
+            }
         }
-        if(!new File(sdkJar).exists())
+        if(!new File(sdkJar).exists())//redundant ?
             sdkJar = new File(sdkRoot, "nope").getAbsolutePath()
         if(!new File(sdkD8).exists())
             sdkD8 = new File(sdkRoot, "nope").getAbsolutePath()
   
-
+        //imagine writing json
         modhjson = ""
         modhjson += 'name: "' + modsNname + '"\n'
         modhjson += 'displayName: "' + modsNdisplayName + '"\n'
@@ -83,11 +86,10 @@ allprojects {
         modhjson += 'minGameVersion: ' + modsNminMindustryVersion + '\n'
         modhjson += "version: " + modsNversion +"\n"
         modhjson += 'hidden: ' + modsNsupportVanillaServer + '\n'
-        if(project.hasProperty("githubRepo"))
-            modhjson += "repo: \"" + githubRepo +"\" \n"
+        if(project.hasProperty("githubRepo"))//supplied by workflow runner (gradle.yml)  -PgithubRepo="$GITHUB_REPOSITORY"
+            modhjson += 'repo: \"' + githubRepo +'\" \n'
         else
             modhjson += 'repo: "' + modsNrepo + '"\n'
-
 
 
         //From Root to every project
@@ -108,11 +110,12 @@ allprojects {
 
 }
 ext{
+    //rewrite mod.hjson everytime gradle rollin
     try {
         File f = new File(projectDir, "mod.hjson")
         f.delete()
         Files.write(f.toPath(), modhjson.toString().getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-    } catch (Throwable) {
+    } catch (ignored) {
     }
 
 }
