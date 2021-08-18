@@ -26,8 +26,9 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'java-library'
 
-sourceCompatibility = "1.8"
-targetCompatibility = "1.8"
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_16
+
 
 //github CI don't sort folder by default
 static File getLatestFolder(File fe){
@@ -47,6 +48,8 @@ static File getLatestFolder(File fe){
 allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
+    group = 'org.example'
+    version = modsNversion
     repositories {
         mavenLocal()
         mavenCentral()
@@ -56,9 +59,13 @@ allprojects {
     }
 
     ext {
-
+        try {
+            System.properties.load(new FileReader("gradle.properties"))
+            System.properties.load(new FileReader("local.properties"))
+        } catch (ignored) {
+        }
         //automatically detect latest shit and skipping it if doesn't exists
-        sdkRoot = System.getenv("ANDROID_HOME")//or just replace it by direct path if you don't need github CI
+        sdkRoot = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")//or just replace it by direct path if you don't need github CI
         if(sdkRoot == null)
             sdkRoot = new File("SDK").getAbsolutePath()
         sdkD8 = sdkRoot + "nope"
@@ -75,9 +82,12 @@ allprojects {
             sdkJar = new File(sdkRoot, "nope").getAbsolutePath()
         if(!new File(sdkD8).exists())
             sdkD8 = new File(sdkRoot, "nope").getAbsolutePath()
-  
+        File mindustryExecutable = getMindustryFile()
+        File mindustryServerExecutable = getMindustryServerFile()
+        //can't assign type
+        androidJarFile = new File(sdkJar);
         //imagine writing json
-        modhjson = ""
+        String modhjson = ""
         modhjson += 'name: "' + modsNname + '"\n'
         modhjson += 'displayName: "' + modsNdisplayName + '"\n'
         modhjson += 'description: "' + modsNdescription + '"\n'
@@ -94,6 +104,16 @@ allprojects {
 
         //From Root to every project
         dependencies{
+            def be = System.getProperty("modsNBE") != null && !System.getProperty("modsNBE").isEmpty()
+            if (be) downloadMindustry(getMindustryURL(), mindustryExecutable);
+            if (be && mindustryExecutable.exists()) {
+                compileOnly(files(mindustryExecutable))
+                //testCompileOnly(files(mindustry))
+                testImplementation(files(mindustryExecutable))
+            }
+
+
+
             compileOnly ("com.github.Anuken.Arc:arc-core:$arcHash"){
                 because("provided")
             }
@@ -109,6 +129,7 @@ allprojects {
 
 
 }
+
 ext{
     //rewrite mod.hjson everytime gradle rollin
     try {
@@ -122,6 +143,15 @@ ext{
 //Root Module only
 dependencies {
 
+    annotationProcessor "com.github.Anuken:jabel:$jabelVersion"
+    if(androidJarFile.exists())
+        compileOnly(files(androidJarFile))
+}
+//not every module use java 8
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+    options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
+    options.compilerArgs.addAll(['--release', '8'])//android like java 8
 }
 //make .class jar with executable main and MANIFEST.MF
 //your typical jar
@@ -169,13 +199,7 @@ task baseJar{
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
-    options.compilerArgs += ["-Xlint:deprecation", "-Xlint:unchecked"]
-    if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
-        options.compilerArgs.addAll(['--release', '8'])//android 4.4 like java 8
-    }
-}
+
 //here we combine typical jar and dex jar to make
 //typical-dex.jar
 //if android sdk exist
@@ -210,48 +234,97 @@ artifacts {
 
 //h
 //add progress bar
-static void downloadMindustry(URL u, File mindustry){
-    mindustry.getParentFile().mkdirs();
-    if(mindustry.exists())return ;
-    mindustry.createNewFile();
-    System.out.println("Downloading: " + u.toString());
-    FileOutputStream f = new FileOutputStream(mindustry);
-    arc.util.io.Streams.copy(u.openStream(), f);
-    f.close()
+static void downloadMindustry(URL url, File download) {
+    download.getParentFile().mkdirs();
+    if (download.exists()) return;
+    System.out.println("Downloading: " + url.toString());
+
+    HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    BufferedInputStream input = new BufferedInputStream(con.getInputStream());
+    download.getAbsoluteFile().getParentFile().mkdirs();
+    RandomAccessFile output = new RandomAccessFile(download, "rw");
+
+    int bytesRead;
+    byte[] buffer = new byte[4096];
+    long nextLog = System.currentTimeMillis() + 4000
+    long readed = 0;
+    while ((bytesRead = input.read(buffer)) != -1) {
+        readed += bytesRead;
+        output.write(buffer, 0, bytesRead);
+        if (System.currentTimeMillis() > nextLog) {
+            System.out.println(readed / 1_000_000)
+            nextLog = System.currentTimeMillis() + 4000
+        }
+    }
+    output.close()
 
 }
 //don't crash
-static void copyToMindustry(File f){
+static void copyToMindustry(File f) {
     File target = new File(OS.getAppDataDirectoryString("Mindustry"))
     target = new File(target, "mods")
     target = new File(target, f.getName())
     target.getParentFile().mkdirs()
-    System.out.println("Copying: " + f.getAbsolutePath() + " to "+ target.getAbsolutePath());
+    System.out.println("Copying: " + f.getAbsolutePath() + " to " + target.getAbsolutePath());
     Files.copy(f.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 }
+
+static URL getMindustryServerURL() {
+    if (System.getProperty("modsNBE", null) != null) {
+        String h = System.getProperty("modsNBE");
+        return new URL("https://github.com/Anuken/MindustryBuilds/releases/download/" + h + "/Mindustry-BE-Server-" + h + ".jar")
+    }
+    return new URL("https://github.com/Anuken/Mindustry/releases/download/" + System.getProperty("mindustryHash") + "/server-release.jar");
+}
+
+static File getMindustryServerFile() {
+    URL u = getMindustryServerURL()
+    File mindustry = new File(new File(new File(OS.getAppDataDirectoryString("Mindustry")), "build/cache/"), u.getFile());
+    return mindustry.getAbsoluteFile();
+}
+
+static URL getMindustryURL() {
+    if (System.getProperty("modsNBE", null) != null) {
+        String h = System.getProperty("modsNBE");
+        return new URL("https://github.com/Anuken/MindustryBuilds/releases/download/" + h + "/Mindustry-BE-Desktop-" + h + ".jar")
+    }
+    return new URL("https://github.com/Anuken/Mindustry/releases/download/" + System.getProperty("mindustryHash") + "/Mindustry.jar");
+}
+
+static File getMindustryFile() {
+    URL u = getMindustryURL()
+    File mindustry = new File(new File(new File(OS.getAppDataDirectoryString("Mindustry")), "build/cache/"), u.getFile());
+    return mindustry.getAbsoluteFile();
+}
+
 //how lazy to download this
-task download(){
-    doLast{
-        URL u = new URL("https://github.com/Anuken/Mindustry/releases/download/" + mindustryHash + "/Mindustry.jar");
-        File mindustry = new File(new File(new File(OS.getAppDataDirectoryString("Mindustry")), "build/cache/"), u.getFile());
-        downloadMindustry(u, mindustry);
+task download() {
+    doLast {
+        downloadMindustry(getMindustryServerURL(), getMindustryServerFile());
+        downloadMindustry(getMindustryURL(), getMindustryFile());
     }
 }
 //don't want open file manager
-task copyMods(){
+task copyMods() {
     dependsOn base//you don't need dex jar for pc
-    doLast{
-        copyToMindustry(new File(new File(projectDir.toString()), "build/libs/"+modsNname+".jar"))
+    doLast {
+        File srcJar = new File(new File(projectDir.toString()), "build/libs/" + modsNname + ".jar")
+        copyToMindustry(srcJar)
+        File target = new File(projectDir.toString(), "config/mods/" + modsNname + ".jar")
+        target.getParentFile().mkdirs()
+        System.out.println("Copying: " + srcJar.getAbsolutePath() + " to " + target.getAbsolutePath());
+        Files.copy(srcJar.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 }
+
 //java -jar Mindustry.jar
 //cooler java -jar Mindustry.jar
 task run(type: JavaExec) {
     dependsOn download
     dependsOn copyMods//make class jar then copy it, why the hell you need to dex it
-    URL u = new URL("https://github.com/Anuken/Mindustry/releases/download/" + mindustryHash + "/Mindustry.jar");
-    File mindustry = new File(new File(new File(OS.getAppDataDirectoryString("Mindustry")), "build/cache/"), u.getFile());
+    File mindustry = getMindustryFile()
+    println(mindustry.getAbsolutePath())
     classpath = files(mindustry.getAbsolutePath())
-    classpath += sourceSets.main.runtimeClasspath
+    //classpath += sourceSets.main.runtimeClasspath//will append classpath to java
     main = "mindustry.desktop.DesktopLauncher"
 }
