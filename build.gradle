@@ -87,7 +87,7 @@ allprojects {
         //can't assign type
         androidJarFile = new File(sdkJar);
         //imagine writing json
-        String modhjson = ""
+        modhjson = ""
         modhjson += 'name: "' + modsNname + '"\n'
         modhjson += 'displayName: "' + modsNdisplayName + '"\n'
         modhjson += 'description: "' + modsNdescription + '"\n'
