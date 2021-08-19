@@ -82,8 +82,8 @@ allprojects {
             sdkJar = new File(sdkRoot, "nope").getAbsolutePath()
         if(!new File(sdkD8).exists())
             sdkD8 = new File(sdkRoot, "nope").getAbsolutePath()
-        File mindustryExecutable = getMindustryFile()
-        File mindustryServerExecutable = getMindustryServerFile()
+        mindustryExecutable = getMindustryFile()
+        mindustryServerExecutable = getMindustryServerFile()
         //can't assign type
         androidJarFile = new File(sdkJar);
         //imagine writing json
