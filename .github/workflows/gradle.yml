@@ -75,6 +75,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         #write it by yourself, not worth automating it
+        #no, not here on the GitHub Draft Release
         tag_name: "Snapshot"
         release_name: "0.0.0"
         body: "${{ steps.manifest.outputs.content }}"
