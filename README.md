@@ -7,8 +7,8 @@ Note: automatically use d8 and make dexed jar if detected
 
 ### How to build and run
 
-- `gradle run` install the mod and run it in just single command
-
+- `gradle runClient` install the mod and run it in just single command
+- `gradle runServer` same thing as above but for server
 ### How to make jar for android
 
 - install Android SDK ???

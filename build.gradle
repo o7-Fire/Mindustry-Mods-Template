@@ -152,7 +152,7 @@ ext {
 }
 //Root Module only
 dependencies {
-    annotationProcessor "com.github.Anuken:jabel:$jabelVersion"
+    if (!OS.isWindows) annotationProcessor "com.github.Anuken:jabel:$jabelVersion"
     if (androidJarFile.exists())
         compileOnly(files(androidJarFile))
 }
@@ -316,8 +316,10 @@ task download() {
 task copyMods() {
     dependsOn 'base'//you don't need dex jar for pc
     doLast {
+        //client side
         File srcJar = new File(new File(projectDir.toString()), "build/libs/" + modsNname + ".jar")
         copyToMindustry(srcJar)
+        //server side
         File target = new File(projectDir.toString(), "config/mods/" + modsNname + ".jar")
         target.getParentFile().mkdirs()
         System.out.println("Copying: " + srcJar.getAbsolutePath() + " to " + target.getAbsolutePath())
@@ -327,7 +329,7 @@ task copyMods() {
 
 //java -jar Mindustry.jar
 //cooler java -jar Mindustry.jar
-task run(type: JavaExec) {
+task runClient(type: JavaExec) {
     dependsOn download
     dependsOn copyMods//make class jar then copy it, why the hell you need to dex it
     File mindustry = getMindustryFile()
@@ -336,3 +338,37 @@ task run(type: JavaExec) {
     //classpath += sourceSets.main.runtimeClasspath//will append classpath to java
     main = "mindustry.desktop.DesktopLauncher"
 }
+
+task runServer(type: JavaExec) {
+    dependsOn download
+    dependsOn copyMods//make class jar then copy it, why the hell you need to dex it
+    File mindustry = getMindustryServerFile()
+    println(mindustry.getAbsolutePath())
+    classpath = files(mindustry.getAbsolutePath())
+    //classpath += sourceSets.main.runtimeClasspath//will append classpath to java
+    args = ["host", "Ancient_Caldera", "sandbox"]
+    main = "mindustry.server.ServerLauncher"
+}
+
+task runCleanup {
+    doLast {
+        //delete copyMods
+        //server side
+        File server = new File(projectDir.toString(), "config/mods/" + modsNname + ".jar")
+        server.delete()
+
+        //client side
+        File srcJar = new File(new File(projectDir.toString()), "build/libs/" + modsNname + ".jar")
+        //srcJar.delete()
+        File client = new File(OS.getAppDataDirectoryString("Mindustry"))
+        client = new File(client, "mods")
+        client = new File(client, srcJar.getName())
+        client.delete()
+        println("Cleanup done")
+
+
+    }
+}
+
+runClient.finalizedBy runCleanup
+runServer.finalizedBy runCleanup
