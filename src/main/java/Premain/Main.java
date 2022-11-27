@@ -14,6 +14,7 @@ public class Main extends Mod {
 	@Override
 	public void init() {
 		Log.infoTag("Example-Mods", "Hello World!");
+
 		if (Vars.ui == null) return;
 		//do you like lambda ?
 		Core.settings.getBoolOnce("Test", () -> {//only run once btw
