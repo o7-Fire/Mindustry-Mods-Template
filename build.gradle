@@ -113,6 +113,7 @@ allprojects {
             if (details.requested.group == 'com.github.Anuken.Arc') {
                 details.useVersion "$mindustryHash"
             }
+
         }
     }
 
