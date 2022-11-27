@@ -191,7 +191,7 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 //not jar task
 //just handle making dexed jar after making typical jar
 task baseJar {
-    dependsOn base//typical jar
+    dependsOn 'base'//typical jar
     //collect dependencies needed for desugaring
     if (new File(sdkD8).exists()) {
         def files = (configurations.compileClasspath.asList() + configurations.runtimeClasspath.asList() + [new File(sdkJar)])
